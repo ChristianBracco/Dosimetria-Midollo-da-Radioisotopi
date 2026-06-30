@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registro Misure Midollo – Local App</title>
+  <!-- Chart & PDF & Fit libs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+  // serve specificare il worker per evitare warning/errore
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+</script>
+
+
+  <!-- CSS esterno -->
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<div id="reportContainer">
+  <div class="container">
+
+    <!-- pulsanti globali -->
+    <div class="flex right" style="margin-bottom:12px">
+	<button id="btnImportPDF">Importa da PDF</button>
+      <button class="ghost" id="btnLoad">Carica JSON</button>
+	  <input type="file" id="fileJSON" accept=".json" style="display:none">
+      <button id="btnSave">Salva JSON</button>
+      <button class="ghost" id="btnReset">Reset</button>
+    <button class="warn" onclick="apriModaleScelta()">Genera Report</button>
+    </div>
+
+    <div class="card">
+      <h1>Calculator per dose a Midollo/Blood • Local Only</h1>
+      <p class="muted">Inserimento misure, fit bi-esponenziale, integrazione AUC (Ã), dose midollo con S-factor, grafici e PDF.  
+      Dati salvati nel <b>localStorage</b>.</p>
+    </div>
+
+    <!-- 🔹 LAYOUT A 3 COLONNE -->
+    <div class="grid cols-3" style="margin-top:16px">
+
+      <!-- PATIENT REGISTRY -->
+      <div class="card">
+        <h2>Patient Registry</h2>
+
+        <div class="row"><div><label>Nome</label><input id="ptName" placeholder="COGNOME NOME"></div></div>
+
+        <div class="row" style="grid-template-columns: repeat(2,1fr)">
+          <div><label>Cartella Clinica</label><input id="ptCC"></div>
+          <div><label>ID Babele</label><input id="ptBabele"></div>
+        </div>
+
+        <div class="row" style="grid-template-columns: repeat(3,1fr)">
+          <div><label>Data nascita</label><input id="ptDOB" type="date"></div>
+          <div><label>Sesso</label>
+            <select id="ptSex"><option value="F">F</option><option value="M">M</option></select>
+          </div>
+          <div><label>Età</label><div id="ptAge" class="calc-field">—</div></div>
+        </div>
+
+        <div class="row" style="grid-template-columns: repeat(2,1fr)">
+          <div><label>Peso (kg)</label><input id="ptWt" type="text" step="0.1"></div>
+          <div><label>Altezza (cm)</label><input id="ptHt" type="text" step="1"></div>
+        </div>
+
+
+        <div class="row" style="grid-template-columns: repeat(2,1fr)">
+          <div><label>Radiopharmaceutical</label>
+            <select id="ptRadio">
+              <option value="177Lu-Lutathera">177Lu-Lutathera</option>
+              <option value="177Lu-PSMA">177Lu-PSMA</option>
+              <option value="131I">131I</option>
+              <option value="90Y">90Y</option>
+              <option value="225Ac">225Ac</option>
+            </select>
+          </div>
+          <div><label>T½ fisico (d)</label><input id="ptT12" type="text" step="0.01" value="6.65"></div>
+        </div>
+
+<!-- τ + λ -->
+<div class="row" style="grid-template-columns: repeat(2,1fr)">
+  <div>
+    <label>τ (d) residenza</label>
+    <input id="ptTau" type="text" step="0.01" value="9.59">
+  </div>
+  <div>
+    <label>λ (d⁻¹)</label>
+    <div id="kpiLambda" class="calc-field">—</div>
+  </div>
+</div>
+
+<!-- Blood Volume + Red Marrow + RM/Blood ratio -->
+<div class="row" style="grid-template-columns: repeat(3,1fr)">
+  <div>
+    <label>Blood Volume (ml)</label>
+    <div id="kpiBLV" class="calc-field">—</div>
+  </div>
+  <div>
+    <label>Red Marrow (kg)</label>
+    <input id="ptRMkg" type="text" step="0.01">
+  </div>
+  <div>
+    <label>RM/Blood ratio</label>
+    <div id="kpiRMBR" class="calc-field">—</div>
+  </div>
+</div>
+<div class="flex right" style="margin-top:8px">
+  <button id="btnPastePatient">Importa dati da clipboard</button>
+</div>
+<div class="flex right"><button  id="btnComputeBLV">Calcola</button></div>
+</div>
+
+
+<!-- ADMINISTRATION -->
+<div class="card">
+  <h2>Administration</h2>
+
+  <!-- Measured (OBBLIGATORIO) -->
+  <div class="row" style="grid-template-columns: repeat(2,1fr)">
+    <div>
+      <label>Measured – Date/Time <span class="req">*</span></label>
+      <input id="admMeasuredDT" type="datetime-local" class="required">
+    </div>
+    <div>
+      <label>Measured (MBq) <span class="req">*</span></label>
+      <input id="admMeasured" type="text" step="0.01" class="required">
+    </div>
+  </div>
+
+  <!-- Calibrated (FACOLTATIVO) -->
+  <div class="row" style="grid-template-columns: repeat(2,1fr)">
+    <div>
+      <label>Calibrated – Date/Time</label>
+      <input id="admCalibDT" type="datetime-local">
+    </div>
+    <div>
+      <label>Calibrated (MBq)</label>
+      <input id="admCalib" type="text" >
+    </div>
+  </div>
+
+  <!-- Expected (FACOLTATIVO) -->
+  <div class="row" style="grid-template-columns: repeat(2,1fr)">
+    <div>
+      <label>Expected – Date/Time</label>
+      <input id="admExpectedDT" type="datetime-local">
+    </div>
+    <div>
+      <label>Expected (MBq)</label>
+      <input id="admExpected" type="text" class="calc-field">
+    </div>
+  </div>
+
+  <!-- Empty (OBBLIGATORIO) -->
+  <div class="row" style="grid-template-columns: repeat(2,1fr)">
+    <div>
+      <label>Empty – Date/Time <span class="req">*</span></label>
+      <input id="admEmptyDT" type="datetime-local" class="required">
+    </div>
+    <div>
+      <label>Empty (MBq) <span class="req">*</span></label>
+      <input id="admEmpty" type="text" step="0.01" class="required">
+    </div>
+  </div>
+
+  <!-- Expected/Measured (OBBLIGATORIO, calcolato) -->
+  <div class="row" style="grid-template-columns: repeat(2,1fr)">
+    <div>
+      <label>Expected/Measured – Date/Time  <span class="req">*</span></label>
+      <input id="admExpMeasDT" type="datetime-local" class="required">
+    </div>
+    <div>
+      <label>Expected/Measured <span class="req">*</span></label>
+      <div id="admExpMeas" class="calc-field">—</div>
+    </div>
+  </div>
+
+  <!-- Administered (OBBLIGATORIO) -->
+  <div class="row" style="grid-template-columns: repeat(2,1fr)">
+    <div>
+      <label>Administered – Date/Time <span class="req">*</span></label>
+      <input id="admAdminDT" type="datetime-local" class="required">
+    </div>
+    <div>
+	 <label>Administered <span class="req">*</span></label>
+      <input id="admAdministered" type="text" class="calc-field" >
+    </div>
+  </div>
+
+  <div class="flex right" style="margin-top:12px">
+    <button id="btnAdminCalc">Calcola Admin</button>
+  </div>
+</div>
+      <!-- BLOOD -->
+      <div class="card">
+        <h2>Blood – campioni & calibrazione</h2>
+<div class="row">
+  <div>
+    <label>Counter</label>
+    <select id="bloodCounter">
+      <option value="Germanio">Germanio</option>
+      <option value="Capintec">Capintec</option>
+    </select>
+  </div>
+  <div>
+    <label>Calibration Factor (cpm/kBq)</label>
+    <input id="bloodCalib" type="text" step="0.1" readonly>
+  </div>
+  
+</div>
+
+<!-- 🔹 Riga separata per le note -->
+<div class="row fullwidth">
+  <label for="noteField">Note</label>
+  <textarea id="noteField" placeholder="208 keV peak, λ"></textarea>
+</div>
+
+        <div class="flex" style="margin-top:8px">
+          <button id="addBlood" >+ Aggiungi campione</button>
+          <button class="ghost" id="clearBlood" >Svuota tabella</button>
+
+<!-- Modal per aggiungere campione Blood -->
+<div id="modalBlood" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" id="closeModalBlood">&times;</span>
+    <h3>Aggiungi campione di sangue</h3>
+
+    <div class="row">
+      <label>Data/Ora prelievo</label>
+      <input id="bloodDatetimeSample" type="datetime-local">
+    </div>
+
+    <div class="row">
+      <label>Data/Ora lettura conteggi</label>
+      <input id="bloodDatetimeCount" type="datetime-local">
+    </div>
+
+    <div class="row">
+      <label>Volume (ml)</label>
+      <input id="bloodVol" type="number" step="any" value="1">
+    </div>
+	<div class="row">
+  <label>Peso netto (g)</label> <!-- 🆕 -->
+  <input id="bloodNetWeight" type="number" step="0.01" value="1.06">
+</div>
+
+    <div class="row">
+      <label>CPM</label>
+      <input id="bloodCpm" type="number" step="any">
+    </div>
+
+    <div class="flex right" style="margin-top:12px">
+      <button id="btnAddBloodModal">Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+
+
+        </div>
+
+<table id="tblBlood" style="margin-top:8px">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Prelievo</th>
+      <th>Lettura</th>
+      <th>t (h)</th>
+      <th>Volume (ml)</th>
+      <th>CPM</th>
+      <th>Netto (g)</th> <!-- 🆕 nuova colonna -->
+      <th>Conc (kBq/ml)</th>
+      <th>FIA (1ml)</th>
+      <th>FIA sangue</th>
+      <th>Azioni</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+
+
+        <div class="chart-wrap"><canvas id="chartBlood"></canvas></div>
+<div class="fit-results">
+  <p id="bloodFit">—</p>
+</div>
+<div class="flex right" style="margin-top:8px">
+  <button id="btnFitBlood">Esegui Fit Blood</button>
+</div>
+
+
+      </div>
+
+    </div>
+
+    <!-- WHOLE BODY & DOSE -->
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card">
+        <h2>Whole Body – Therabed</h2>
+        <div class="flex"><button id="importWB">Importa da clipboard</button> <button id="addWB">+ Aggiungi misura da Camera Ambientale</button><button class="ghost" id="clearWB">Svuota</button></div>
+        
+<!-- Modal per aggiungere misura WB -->
+<div id="modalWB" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" id="closeModalWB">&times;</span>
+    <h3>Aggiungi 2 misure da Camera Ambientale</h3>
+    <div class="row">
+      <label>Data/Ora misura 1</label>
+      <input id="wbDatetime1" type="datetime-local">
+      <label>Read 1 (a.u.)</label>
+      <input id="wbRead1" type="number" step="any">
+    </div>
+    <div class="row">
+      <label>Data/Ora misura 2</label>
+      <input id="wbDatetime2" type="datetime-local">
+      <label>Read 2 (a.u.)</label>
+      <input id="wbRead2" type="number" step="any">
+    </div>
+    <div class="flex right" style="margin-top:12px">
+      <button id="btnAddWBModal">Calcola e aggiungi</button>
+    </div>
+  </div>
+</div>
+
+
+
+		<table id="tblWB" style="margin-top:8px">
+      <thead>
+  <tr><th>#</th><th>t (h)</th><th>Read (a.u.)</th><th>FIA (%)</th><th>Azioni</th></tr>
+</thead>
+
+          <tbody></tbody>
+        </table><div class="chart-wrap"><canvas id="chartWB"></canvas></div>
+
+<div class="fit-results">
+<p id="wbFit">—</p>
+  <p>Fit: Y = A·e<sup>(-B·t)</sup> + C·e<sup>(-D·t)</sup></p>
+</div>
+              <div class="flex right" style="margin-top:8px">
+  <button id="btnFitWB">Esegui Fit WB</button>
+</div>
+      </div>
+
+<div id="doseSection" class="section">
+  <h3 id="doseTitle">Dose Midollo</h3>
+
+  <div id="doseGrid" class="grid">
+    <!-- === Default layout (Lu-177 ecc.) === -->
+    <div class="card"><div class="muted">Ã<sub>wb</sub> (h)</div><div class="val" id="kpiAwb">—</div></div>
+    <div class="card"><div class="muted">Ã<sub>lim</sub> (h)</div><div class="val" id="kpiAlim">—</div></div>
+    <div class="card"><div class="muted">Ã<sub>blood</sub> (h/g)</div><div class="val" id="kpiAblood">—</div></div>
+    <div class="card"><div class="muted">Ã<sub>blood</sub> (h/kg)</div><div class="val" id="kpiAbloodkg">—</div></div>
+    <div class="card"><div class="muted">Ã<sub>rm</sub> (h)</div><div class="val" id="kpiArm">—</div></div>
+    <div class="card"><div class="muted">Ã<sub>rb</sub> (rm,tb) [h]</div><div class="val" id="kpiArb">—</div></div>
+    <div class="card"><div class="muted">mRM (kg)</div><div class="val" id="kpiMrm">—</div></div>
+    <div class="card"><div class="muted">mRB (rm,tb) [kg]</div><div class="val" id="kpiMrb">—</div></div>
+    <div class="card"><div class="muted">REF mRB (kg)</div><div class="val" id="kpiMrbRef">—</div></div>
+
+    <!-- 🔹 KPI Dosimetrici standard -->
+    <div class="card"><div class="muted">Self-irradiation (mGy/MBq)</div><div class="val" id="kpiSelfIrradiation">—</div></div>
+    <div class="card"><div class="muted">ROB (mGy/MBq)</div><div class="val" id="kpiROB">—</div></div>
+    <div class="card"><div class="muted">Self Dose (Gy)</div><div class="val" id="kpiSelfDose">—</div></div>
+    <div class="card"><div class="muted">Cross Dose (Gy)</div><div class="val" id="kpiCrossDose">—</div></div>
+    <div class="card"><div class="muted">Total Dose (Gy)</div><div class="val" id="kpiTotalDoseGy">—</div></div>
+    <div class="card"><div class="muted">Total Dose per Admin Activity (mGy/MBq)</div><div class="val" id="kpiTotalDosePerAdminActivity">—</div></div>
+  </div>
+
+  <!-- 🔹 Nuovi campi Iodio (invisibili di default) -->
+  <div id="iodineGrid" class="grid" style="display:none;">
+    <div class="card"><div class="muted">Ã<sub>wb</sub> (h)</div><div class="val" id="iodTauWB">—</div></div>
+    <div class="card"><div class="muted">Ã<sub>blood</sub> (h/g)</div><div class="val" id="iodTauBlood">—</div></div>
+    <div class="card"><div class="muted">Dose Midollo AIFM (Gy)</div><div class="val" id="iodDoseAIFM">—</div></div>
+    <div class="card"><div class="muted">Dose Midollo Traino et al. (Gy)</div><div class="val" id="iodDoseTraino">—</div></div>
+    <div class="card"><div class="muted">Dose Sangue (Gy)</div><div class="val" id="iodDoseSangue">—</div></div>
+    <div class="card highlight"><div class="muted"><strong>Dose Somma (Gy)</strong></div><div class="val" id="iodDoseSomma">—</div></div>
+  </div>
+
+  <div class="flex right" style="margin-top:12px">
+    <button class="ghost" onclick="window.open('formule.html','_blank')">  📘 Vedi Formule</button>
+  </div>
+</div>
+
+
+
+
+
+
+    </div>
+  </div>
+
+<!-- 🧾 MODAL: Scelta Fisico e Medico -->
+<div id="modalPDF" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>Genera PDF Midollo</h3>
+
+    <label>Fisico:</label>
+    <select id="selFisico">
+      <option>Christian Bracco</option>
+      <option>Elisa Richetta</option>
+    </select>
+
+    <label>Medico Nucleare:</label>
+    <select id="selMedico">
+      <option>V.Pirro</option>
+      <option>G. Brusasco</option>
+      <option>M. Manfredi</option>
+      <option>V. Garbaccio</option>
+      <option>A. Codegone</option>
+      <option>D. Nicolotti</option>
+      <option>G. Santopolo</option>
+      <option>O.E. Baldassarre</option>
+    </select>
+
+    <div class="modal-buttons">
+     <button class="warn" onclick="confermaPDF()">📄 Genera PDF</button>
+      <button class="btn-annulla" onclick="chiudiModale()">Annulla</button>
+    </div>
+  </div>
+</div>
+
+  <!-- JS esterno -->
+  <script src="src/script.js"></script>
+  </div>
+    <footer>
+    CB Software Solutions © 2025 — Sistema Dosimetrico Midollo
+  </footer>
+</body>
+</html>

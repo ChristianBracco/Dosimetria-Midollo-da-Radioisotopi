@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentazione Dosimetrica – Midollo e Sangue</title>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 30px 60px;
+      line-height: 1.7;
+      max-width: 1200px;
+      margin: auto;
+    }
+    h1, h2, h3 {
+      text-align: center;
+    }
+    h1 { color: #38bdf8; }
+    h2 { color: #facc15; border-bottom: 1px solid #334155; margin-top: 35px; }
+    h3 { color: #4ade80; margin-top: 20px; }
+    .formula {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 10px 0 20px 0;
+    }
+    .refbox {
+      background: #1e293b;
+      border: 2px solid #38bdf8;
+      border-radius: 12px;
+      padding: 18px;
+      margin: 25px 0 40px 0;
+    }
+    .refbox h3 { color: #38bdf8; margin-top: 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 25px 0;
+      background: #1e293b;
+      border: 1px solid #334155;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #334155;
+      text-align: center;
+    }
+    th {
+      background: #334155;
+      color: #facc15;
+    }
+    p {
+      text-align: justify;
+    }
+    a {
+      color: #38bdf8;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Documentazione Dosimetrica – Midollo e Sangue</h1>
+
+  <div class="refbox">
+    <h3>📘 Modelli Implementati e Riferimenti Bibliografici</h3>
+    <ul>
+      <li><strong>AIFM</strong> – Protocollo Multicentrico per Terapia Metabolica con Iodio-131 (AIFM Working Group, 2021)</li>
+      <li><strong>Traino et al.</strong> – “A general model for red marrow dosimetry in radionuclide therapy”, <em>Phys Med Biol</em>, 2007, <a href="https://doi.org/10.1088/0031-9155/52/18/009">DOI:10.1088/0031-9155/52/18/009</a></li>
+      <li><strong>EANM 2008</strong> – “EANM Dosimetry Committee: Standard Operational Procedures for I-131 therapy of benign thyroid disease”, <em>Eur J Nucl Med Mol Imaging</em>, 2008</li>
+      <li><strong>MIRD 17</strong> – “Radiation dose to red marrow in therapy with radiolabeled antibodies”, <em>J Nucl Med</em>, 1999</li>
+    </ul>
+    <p>
+      I modelli qui descritti sono stati implementati nel software per calcolare la dose assorbita al midollo osseo e al sangue
+      nei trattamenti con radionuclidi β-emittenti.  
+      Le formule variano in base all’isotopo selezionato: <strong>Lu-177</strong> (Lutathera, PSMA) o <strong>I-131</strong> (radioiodio).
+    </p>
+  </div>
+
+  <h2>1. Concetti Generali</h2>
+  <p>
+    La dosimetria del midollo si basa sull’integrazione temporale delle curve di ritenzione del radionuclide
+    (Whole Body e sangue), ottenute da campionamenti seriati post-somministrazione.
+    Le attività cumulate (\(\tilde{A}\)) sono calcolate da un fit bi-esponenziale:
+  </p>
+
+  <div class="formula">
+    \[
+    A(t) = A_1 e^{-\lambda_1 t} + A_2 e^{-\lambda_2 t}
+    \]
+    \[
+    \tilde{A} = \frac{A_1}{\lambda_1} + \frac{A_2}{\lambda_2}
+    \]
+  </div>
+
+  <p>
+    dove \(A_1, A_2\) sono le componenti del fit e \(\lambda_1, \lambda_2\) i rispettivi tassi di decadimento biologico.
+  </p>
+
+  <h2>2. Calcolo del Volume Ematico e della Massa Midollare</h2>
+  <h3>Blood Volume (BLV)</h3>
+  <div class="formula">
+    \[
+    BLV_{male} = (0.3669 h^3 + 0.03219 w + 0.6041) \times 1000
+    \]
+    \[
+    BLV_{female} = (0.3561 h^3 + 0.03308 w + 0.1833) \times 1000
+    \]
+  </div>
+
+  <p>
+    con \(h\) = altezza (m), \(w\) = peso (kg). Il risultato è espresso in mL e utilizzato per derivare la massa del midollo rosso:
+  </p>
+
+  <div class="formula">
+    \[
+    m_{RM} = BLV \times f_{blood\to marrow}
+    \]
+  </div>
+
+  <p>dove \(f_{blood\to marrow}\) rappresenta la frazione di massa ematica riferita al midollo rosso.</p>
+
+  <h2>3. Attività cumulate e normalizzazioni</h2>
+  <p>
+    Le attività cumulate (Whole Body, Sangue, Midollo) vengono normalizzate all’attività somministrata per ottenere i tempi di residenza (\(\tau\)):
+  </p>
+  <div class="formula">
+    \[
+    \tau = \frac{\tilde{A}}{A_{somministrata}}
+    \]
+  </div>
+
+  <p>
+    In caso di I-131, la concentrazione ematica viene ulteriormente normalizzata per la massa netta del campione
+    (espressa in g o mL), poiché i valori di CPM devono essere convertiti in kBq/mL prima della normalizzazione.
+  </p>
+
+  <h2>4. Calcolo Dose Midollare – <em>Lu-177</em></h2>
+  <p>
+    Per il Lutetio-177 la dose al midollo deriva da un modello di tipo <em>source-target</em> con contributi di auto-irradiazione e cross-irradiazione.
+  </p>
+
+  <h3>Fit e attività cumulate</h3>
+  <div class="formula">
+    \[
+    \tilde{A}_{RM} = \frac{A_{1,RM}}{\lambda_{1,RM}} + \frac{A_{2,RM}}{\lambda_{2,RM}}
+    \]
+  </div>
+
+  <h3>Self-irradiation e Cross-dose</h3>
+  <div class="formula">
+    \[
+    D_{self} = \tilde{A}_{RM} \cdot S_{RM\to RM}
+    \]
+    \[
+    D_{cross} = \tilde{A}_{WB} \cdot S_{WB\to RM}
+    \]
+    \[
+    D_{tot} = D_{self} + D_{cross}
+    \]
+  </div>
+
+  <p>
+    dove \(S_{X\to Y}\) rappresenta il fattore S MIRD per la transizione \(X \to Y\),
+    espresso in mGy/MBq·h.
+  </p>
+
+  <h2>5. Calcolo Dose Midollare e Sanguigna – <em>I-131</em></h2>
+  <p>
+    Per l’Iodio-131, il calcolo si basa sui tempi di residenza del corpo intero e del sangue,
+    e su formule empiriche validate da studi multicentrici AIFM e EANM.
+  </p>
+
+  <h3>AIFM – Dose Midollo</h3>
+  <div class="formula">
+    \[
+    D_{AIFM} =
+    \begin{cases}
+    (0.105 \cdot \frac{T_{WB}}{T_{Blood}} + 61 \cdot T_{Blood}) & \text{(Maschio)}\\[6pt]
+    (0.0945 \cdot \frac{T_{WB}}{T_{Blood}} + 64 \cdot T_{Blood}) & \text{(Femmina)}
+    \end{cases}
+    \]
+  </div>
+
+  <h3>Traino et al. – Dose Midollo</h3>
+  <div class="formula">
+    \[
+    D_{Traino} =
+    \begin{cases}
+    55.89 \cdot T_{Blood} \cdot T_{WB}^{0.026} +
+    (T_{WB} - 15.2 T_{Blood}) \left(\frac{0.6967}{T_{WB}^{1.331}} - \frac{4.1683}{T_{WB}^{1.948}}\right)
+    & \text{(Maschio)}\\[6pt]
+    58.97 \cdot T_{Blood} \cdot T_{WB}^{0.028} +
+    (T_{WB} - 22.8 T_{Blood}) \left(\frac{0.5427}{T_{WB}^{1.302}} - \frac{3.4074}{T_{WB}^{1.944}}\right)
+    & \text{(Femmina)}
+    \end{cases}
+    \]
+  </div>
+  
+<h3>EANM 2008 – Dose al Sangue</h3>
+<div class="formula">
+  \[
+  D_{\text{Sangue}} = D_{\text{Self}} + D_{\text{Cross}}
+  \]
+  \[
+  D_{\text{Self}} = 108 \cdot \tau_{\text{Blood}}
+  \qquad
+  D_{\text{Cross}} = 0.0188 \cdot \frac{\tau_{\text{WB}}}{\text{age}^{2/3}}
+  \]
+  \[
+  \Rightarrow
+  D_{\text{EANM}} = 108 \cdot \tau_{\text{Blood}}
+  + 0.0188 \cdot \frac{\tau_{\text{WB}}}{\text{age}^{2/3}}
+  \]
+</div>
+
+<p>
+  dove:
+  <ul>
+    <li>\(D_{\text{Self}}\): contributo di auto-irradiazione (sangue → sangue)</li>
+    <li>\(D_{\text{Cross}}\): contributo di cross-irradiazione (corpo intero → sangue)</li>
+    <li>\(D_{\text{EANM}}\): dose totale al sangue, somma dei due contributi</li>
+  </ul>
+</p>
+
+<h3>Attività equivalente a 2 Gy al sangue</h3>
+<div class="formula">
+  \[
+  A_{2\,\text{Gy}} = \frac{2}{D_{\text{EANM, per GBq}}}
+  \]
+</div>
+
+<p>
+  L’attività somministrata che produce 2 Gy al sangue viene calcolata dividendo 2 Gy per la dose specifica
+  (Gy per GBq) derivata dall’equazione EANM 2008.  
+  Nel software la card “Attività per 2 Gy al Sangue” viene colorata in verde (&lt;1.5 Gy), giallo (1.5–2 Gy)
+  o rosso (≥ 2 Gy) a seconda del rischio di tossicità ematologica.
+</p>
+
+
+
+  <h2>6. Parametri e Unità di Misura</h2>
+  <table>
+    <thead>
+      <tr><th>Parametro</th><th>Descrizione</th><th>Unità</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>\(T_{WB}\)</td><td>Tempo di residenza Whole Body</td><td>h</td></tr>
+      <tr><td>\(T_{Blood}\)</td><td>Tempo di residenza Sangue (1/g)</td><td>h/g</td></tr>
+      <tr><td>\(\tilde{A}\)</td><td>Attività cumulata</td><td>MBq·h</td></tr>
+      <tr><td>\(S_{X\to Y}\)</td><td>Fattore S MIRD</td><td>mGy/MBq·h</td></tr>
+      <tr><td>\(A_{admin}\)</td><td>Attività somministrata</td><td>MBq</td></tr>
+      <tr><td>\(D_{self}, D_{cross}\)</td><td>Dosi parziali al midollo</td><td>Gy</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7. Conclusioni</h2>
+  <p>
+    Il modulo di calcolo implementa due approcci:
+    <ul>
+      <li><strong>Fisico-modello MIRD (Lu-177)</strong>: basato su masse, attività cumulate e fattori S.</li>
+      <li><strong>Empirico-ematologico (I-131)</strong>: basato su tempi di residenza e modelli di Traino et al., AIFM, EANM.</li>
+    </ul>
+    Le formule sono completamente automatizzate nel codice e selezionate dinamicamente in base all’isotopo.
+  </p>
+</body>
+</html>

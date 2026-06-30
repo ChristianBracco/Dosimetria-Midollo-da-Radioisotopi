@@ -1,0 +1,450 @@
+body {
+  background: linear-gradient(180deg, #f8fafc, #e2e8f0);
+  color: #0f172a;
+  font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 20px 40px;
+  border-bottom: 3px solid #0ea5e9;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+header img { height: 70px; }
+
+h1 { font-size: 1.8rem; margin: 0; }
+h2 {
+  font-size: 1.3rem;
+  border-left: 4px solid #0ea5e9;
+  padding-left: 10px;
+  margin-bottom: 16px;
+}
+
+main { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+section { margin-bottom: 40px; }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+.info-grid strong { display: block; font-size: 0.85rem; color: #475569; }
+.info-grid span { font-weight: 600; color: #0f172a; }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+.kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  padding: 14px 12px;
+  text-align: center;
+}
+.kpi-card .muted { font-size: 0.85rem; color: #64748b; }
+.kpi-card .val { font-size: 1.1rem; font-weight: 600; color: #0f172a; margin-top: 6px; }
+
+.styled-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+.styled-table th {
+  background: #0ea5e9;
+  color: white;
+  font-weight: 600;
+  text-align: center;
+  padding: 10px;
+}
+.styled-table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.grafico {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+}
+canvas { background: white; border-radius: 8px; }
+
+.pdf-btn {
+  background: linear-gradient(90deg, #06b6d4, #2563eb);
+  color: white;
+  font-weight: 600;
+  padding: 14px 22px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.pdf-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 20px rgba(37,99,235,0.3);
+}
+
+.pdf-center { text-align: center; margin-top: 40px; }
+footer {
+  text-align: center;
+  color: #64748b;
+  padding: 20px 0;
+  border-top: 1px solid #e2e8f0;
+  background: #f9fafb;
+  font-size: 0.85rem;
+}
+/* === Grafici PDF-ready === */
+.chart-wrapper {
+  width: 100%;
+  max-width: 900px;
+  height: 400px;             /* altezza fissa per A4 */
+  margin: 1.5rem auto;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.chart-title {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+/* testo generale coerente con PDF */
+body {
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.2rem;
+}
+@media print {
+  #btnPDF {
+    display: none !important;
+  }
+}
+
+
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #f5f7fa;
+}
+
+.print-layout {
+  width: 750px;
+  margin: 20px auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  padding: 25px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header logo + info */
+.print-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #005baa;
+  padding-bottom: 10px;
+}
+
+.print-header img {
+  height: 70px;
+}
+
+.patient-info h2 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.patient-info p {
+  margin: 0;
+  color: #444;
+}
+
+/* Pulsante PDF */
+#btnPDF {
+  position: fixed;
+  bottom: 25px;
+  right: 35px;
+  background-color: #005baa;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 15px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+#btnPDF:hover {
+  background-color: #0072e3;
+  transform: scale(1.04);
+}
+@media print {
+  #btnPDF { display: none !important; }
+}
+body {
+  background: #f5f7fa;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+/* Wrapper centrale */
+.report-wrapper {
+  width: 760px;             /* larghezza simile A4 */
+  margin: 30px auto;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 20px 40px;
+}
+
+/* Header flex */
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid #0072e3;
+  padding-bottom: 10px;
+  margin-bottom: 25px;
+}
+
+.report-header img {
+  height: 70px;
+}
+
+.report-header h1 {
+  font-size: 1.5rem;
+  color: #0b2239;
+  margin: 0;
+}
+
+/* Pulsante fluttuante */
+.pdf-center {
+  text-align: center;
+  margin-top: 20px;
+}
+#btnPDF {
+  background-color: #005baa;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 15px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+#btnPDF:hover {
+  background-color: #0072e3;
+  transform: scale(1.04);
+}
+@media print {
+  #btnPDF { display: none !important; }
+}
+
+/* 🔹 Forza interruzione pagina */
+.page-break {
+  page-break-before: always; /* stampa PDF tradizionale */
+  break-before: page;        /* standard moderno */
+}
+
+/* 🔹 Evita che il blocco venga diviso */
+.avoid-break {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
+  border-bottom: 3px solid #0072e3;
+  padding-bottom: 10px;
+  margin-bottom: 25px;
+}
+
+.report-title h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: #0b2239;
+  text-transform: uppercase;
+}
+
+.report-title h2 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 4px 0 0 0;
+  color: #333;
+}
+.report-footer {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #333;
+  border-top: 2px solid #005baa;
+  padding-top: 8px;
+  margin-top: 25px;
+  line-height: 1.3;
+}
+
+@media print {
+  .report-footer {
+    position: fixed;
+    bottom: 15mm;
+    left: 0;
+    width: 100%;
+    font-size: 10pt;
+    border-top: 1px solid #005baa;
+    background: #fff;
+  }
+}
+.report-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-top: 1px solid #005baa;
+  padding-top: 8px;
+  margin-top: 25px;
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.3;
+}
+
+.report-footer .footer-left,
+.report-footer .footer-right {
+  width: 48%;
+}
+
+.report-footer .footer-left {
+  text-align: left;
+}
+
+.report-footer .footer-right {
+  text-align: right;
+}
+
+.report-footer a {
+  color: #005baa;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.report-footer a:hover {
+  text-decoration: underline;
+}
+
+@media print {
+  .report-footer {
+    position: fixed;
+    bottom: 15mm;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border-top: 1px solid #005baa;
+  }
+}
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #00224d;
+  margin-bottom: 12px;
+}
+
+.section-title .unit {
+  font-weight: 500;
+  color: #005b96;
+  font-size: 0.95em;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.kpi-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 16px 10px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+}
+
+.kpi-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #00224d;
+  margin-bottom: 6px;
+  white-space: nowrap; /* 🔹 impedisce l’andata a capo */
+}
+
+.kpi-value {
+  font-size: 1.2rem;
+  font-weight: 700; /* 🔹 Valori in grassetto */
+  color: #000;
+  margin-top: 4px;
+}
+/* =============================== */
+/* 📉 Grafici compatti per PDF    */
+/* =============================== */
+
+.chart-wrapper.compact {
+  max-width: 100%;
+  margin: 10mm auto 12mm auto;
+}
+
+/* Altezza controllata */
+.chart-wrapper.compact canvas {
+  width: 100%;
+  max-height: 95mm;   /* 🔴 chiave per stare in 2 pagine */
+}
+
+/* Break solo se necessario */
+.page-break-soft {
+  break-before: page;
+  page-break-before: always;
+}
+
+/* Evita spezzature brutte */
+section, .chart-wrapper {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}

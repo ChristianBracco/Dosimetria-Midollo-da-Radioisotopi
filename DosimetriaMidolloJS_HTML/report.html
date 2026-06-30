@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Report Dosimetrico Midollo — CB Software Solutions</title>
+
+  <!-- Librerie -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Librerie necessarie per esportazione PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+
+  <!-- Stile -->
+  <link rel="stylesheet" href="./report/report.css" />
+  
+  <div class="pdf-center">
+ <button id="btnPDF" onclick="exportPDF()">📄 Esporta in PDF</button>
+</div>
+  
+</head>
+
+<body>
+  <div class="report-wrapper">
+    <header class="report-header">
+      <div class="header-left">
+        <img id="logo" src="" alt="Logo Mauriziano" />
+      </div>
+      <div class="header-right">
+        <h1 id="mainTitle">Report DOSIMETRIA MIDOLLO TERAPIA ☢️ </h1>
+		<h2 id="subTitle"></h2>
+      </div>
+    </header>
+<div id="report" class="report-container">
+
+
+  <main>
+    <!-- DATI PAZIENTE -->
+    <section id="datiPaziente">
+      <h2>Dati Paziente</h2>
+      <div class="info-grid">
+        <div><strong>Nome Paziente</strong><span id="nomePaziente">—</span></div>
+        <div><strong>ID Paziente</strong><span id="idPaziente">—</span></div>
+        <div><strong>Data di nascita</strong><span id="dob">—</span></div>
+        <div><strong>Sesso</strong><span id="sesso">—</span></div>
+        <div><strong>Peso (kg)</strong><span id="peso">—</span></div>
+        <div><strong>Altezza (cm)</strong><span id="altezza">—</span></div>
+        <div><strong>Radioisotopo</strong><span id="radioisotopo">—</span></div>
+        <div><strong>Attività somministrata</strong><span id="attivitaSomministrata">—</span></div>
+        <div><strong>Data ricovero</strong><span id="dataRicovero">—</span></div>
+      </div>
+    </section>
+
+    <!-- RISULTATI DOSIMETRICI (nuova sezione KPI) -->
+    <section id="risultati">
+
+<h2>Risultati Dosimetrici in [Gy]</h2>
+
+<div class="kpi-row"
+     style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+  <div class="kpi-card">
+    <h3>
+      Dose midollo self
+    </h3>
+    <div id="doseMidolloSelf" class="kpi-value">0.00</div>
+  </div>
+  <div class="kpi-card">
+    <h3>
+      Dose midollo cross
+    </h3>
+    <div id="doseMidolloCross" class="kpi-value">0.00</div>
+  </div>
+<div class="kpi-card kpi-total">
+  <h3>
+    Dose midollo totale<span class="asterisk">*</span>
+  </h3>
+  <div id="doseMidolloSangue" class="kpi-value">0.00</div>
+</div>
+  <div class="kpi-card">
+    <h3>Attività per erogare 2Gy al midollo</h3>
+    <div id="attivita2Gy" class="kpi-value">—</div>
+  </div>
+</div>
+<div class="dose-referto">
+  * Dose per referto: dose midollo totale (somma dei contributi self e cross)
+</div>
+    </section>
+
+    <!-- GRAFICI -->
+<section id="grafici">
+  <h2>Curve di Fitting</h2>
+
+  <!-- Grafico Sangue -->
+  <div class="chart-wrapper compact">
+    <div class="chart-title">Andamento Sangue</div>
+    <canvas id="chartBlood"></canvas>
+  </div>
+
+  <div class="page-break-soft"></div>
+
+  <!-- Grafico Whole Body -->
+  <div class="chart-wrapper compact">
+    <div class="chart-title">Andamento Whole Body</div>
+    <canvas id="chartWB"></canvas>
+  </div>
+</section>
+
+
+    <!-- FIRME -->
+    <section id="firme">
+      <h2>Firma e Convalida</h2>
+      <p><strong>Specialista in Fisica Medica:</strong> <span id="fisico">—</span></p>
+      <p><strong>Medico Nucleare:</strong> <span id="medico">—</span></p>
+      <p><strong>Data:</strong> <span id="dataFirma">—</span></p>
+    </section>
+
+
+  </main>
+<footer class="report-footer">
+  <div class="footer-left">
+    <p>
+      <strong> Direttore Dr. Michele Stasi</strong><br>
+	  S.C. Interaziendale Fisica Sanitaria
+      A.O. Ordine Mauriziano – ASL Città di Torino – ASL TO3<br>
+     
+    </p>
+  </div>
+  <div class="footer-right">
+    <p>
+      credits to <a href="mailto:cbracco@mauriziano.it">cbracco@mauriziano.it</a><br>
+    </p>
+  </div>
+</footer>
+
+
+  <script>
+    window.IS_REPORT_MODE = true;
+  </script>
+
+    </div>
+	  <script src="./report/report.js"></script>
+</body>
+</html>
