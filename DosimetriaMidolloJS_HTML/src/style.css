@@ -678,3 +678,89 @@ button.delWB:hover, button.delBlood:hover {
   vertical-align: super;
   margin-left: 2px;
 }
+.tooltip-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 1 1 100%;
+  width: 100%;
+  min-width: 220px;
+}
+
+.tooltip-wrap::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  width: min(360px, 80vw);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(2, 6, 23, .96);
+  border: 1px solid rgba(148, 163, 184, .35);
+  color: #f8fafc;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 500;
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease;
+  z-index: 20;
+  white-space: normal;
+}
+
+.tooltip-wrap:hover::after,
+.tooltip-wrap:focus-within::after {
+  opacity: 1;
+}
+
+button[data-tooltip] {
+  position: relative;
+}
+
+button[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(360px, 80vw);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(2, 6, 23, .96);
+  border: 1px solid rgba(148, 163, 184, .35);
+  color: #f8fafc;
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 500;
+  text-align: left;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease;
+  z-index: 30;
+  white-space: normal;
+}
+
+button[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(2, 6, 23, .96);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease;
+  z-index: 31;
+}
+
+button[data-tooltip]:hover::after,
+button[data-tooltip]:focus-visible::after,
+button[data-tooltip]:hover::before,
+button[data-tooltip]:focus-visible::before {
+  opacity: 1;
+}

@@ -304,7 +304,14 @@
     <div class="grid cols-2" style="margin-top:16px">
       <div class="card">
         <h2>Whole Body – Therabed</h2>
-        <div class="flex"><button id="importWB">Importa da clipboard</button> <button id="addWB">+ Aggiungi misura da Camera Ambientale</button><button class="ghost" id="clearWB">Svuota</button></div>
+        <div class="flex">
+          <span class="tooltip-wrap" data-tooltip="Importa dati copiati dalla tabella Therabed: righe MISURA con colonne Tempo (min), Orario Effettivo e Lettura (auto).">
+            <button id="importWB">Importa da clipboard</button>
+          </span>
+          <button id="addWBManual">+ Aggiungi misura Whole Body</button>
+          <button id="addWB">+ Aggiungi misura da Camera Ambientale</button>
+          <button class="ghost" id="clearWB">Svuota</button>
+        </div>
         
 <!-- Modal per aggiungere misura WB -->
 <div id="modalWB" class="modal" style="display:none;">
@@ -330,6 +337,26 @@
 </div>
 
 
+
+
+<!-- Modal per aggiungere misura WB da lettura cartacea -->
+<div id="modalWBManual" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" id="closeModalWBManual">&times;</span>
+    <h3>Aggiungi misura Whole Body</h3>
+    <div class="row">
+      <label>Data misura</label>
+      <input id="wbManualDate" type="date">
+      <label>Ora misura</label>
+      <input id="wbManualTime" type="time">
+      <label>Conteggi</label>
+      <input id="wbManualCounts" type="number" step="any" min="0">
+    </div>
+    <div class="flex right" style="margin-top:12px">
+      <button id="btnAddWBManual">Aggiungi</button>
+    </div>
+  </div>
+</div>
 
 		<table id="tblWB" style="margin-top:8px">
       <thead>

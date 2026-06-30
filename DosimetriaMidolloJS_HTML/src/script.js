@@ -138,6 +138,99 @@ const CALIBRATION_FACTORS = {
   // altri counter...
 };
 
+const BUTTON_TOOLTIPS = {
+  btnImportPDF: "Importa automaticamente i dati paziente e terapia da un PDF Physico.",
+  btnLoad: "Carica una sessione salvata in formato JSON.",
+  btnSave: "Scarica su file JSON tutti i dati inseriti e calcolati.",
+  btnReset: "Cancella i dati locali e riporta l'app allo stato iniziale.",
+  btnPastePatient: "Incolla dal clipboard i dati anagrafici del paziente.",
+  btnComputeBLV: "Ricalcola volume ematico, eta e parametri derivati del paziente.",
+  btnAdminCalc: "Ricalcola attivita somministrata e rapporti della sezione Administration.",
+  addBlood: "Apre la finestra per inserire un nuovo campione di sangue.",
+  clearBlood: "Svuota la tabella dei campioni Blood.",
+  btnAddBloodModal: "Conferma il campione Blood e lo aggiunge alla tabella.",
+  btnFitBlood: "Esegue il fit bi-esponenziale sui campioni Blood.",
+  importWB: "Importa dati copiati dalla tabella Therabed: righe MISURA con Tempo, Orario Effettivo e Lettura.",
+  addWBManual: "Apre l'inserimento manuale di una misura Whole Body.",
+  addWB: "Apre l'inserimento di due misure da Camera Ambientale.",
+  clearWB: "Svuota la tabella Whole Body.",
+  btnAddWBModal: "Calcola il rapporto tra due letture ambientali e aggiunge la misura Whole Body.",
+  btnAddWBManual: "Conferma la misura Whole Body inserita manualmente.",
+  btnFitWB: "Esegue il fit bi-esponenziale sulle misure Whole Body.",
+  btnPDF: "Genera o esporta il report dosimetrico in PDF.",
+  btnConfermaReport: "Conferma le informazioni del report e procede alla generazione.",
+};
+
+const BUTTON_TEXT_TOOLTIPS = {
+  "Genera Report": "Apre la scelta di fisico e medico prima di generare il report.",
+  "Genera PDF": "Genera il PDF finale del report dosimetrico.",
+  "Annulla": "Chiude la finestra senza generare il report.",
+  "Vedi Formule": "Apre la pagina con le formule usate nei calcoli.",
+  "Aggiungi": "Conferma l'inserimento e aggiunge il dato alla tabella.",
+  "Calcola e aggiungi": "Calcola la misura e la aggiunge alla tabella Whole Body.",
+  "Svuota": "Rimuove tutte le misure dalla tabella corrente.",
+};
+
+let buttonTooltipObserver = null;
+
+function normalizeButtonLabel(text) {
+  return (text || "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function resolveButtonTooltip(button) {
+  if (!button) return "";
+  if (button.id && BUTTON_TOOLTIPS[button.id]) return BUTTON_TOOLTIPS[button.id];
+  if (button.classList.contains("delWB")) return "Elimina questa misura Whole Body.";
+  if (button.classList.contains("delBlood")) return "Elimina questo campione Blood.";
+
+  const onclick = button.getAttribute("onclick") || "";
+  if (onclick.includes("apriModaleScelta")) return BUTTON_TEXT_TOOLTIPS["Genera Report"];
+  if (onclick.includes("confermaPDF")) return BUTTON_TEXT_TOOLTIPS["Genera PDF"];
+  if (onclick.includes("chiudiModale")) return BUTTON_TEXT_TOOLTIPS.Annulla;
+  if (onclick.includes("formule.html")) return BUTTON_TEXT_TOOLTIPS["Vedi Formule"];
+
+  return BUTTON_TEXT_TOOLTIPS[normalizeButtonLabel(button.textContent)] || "";
+}
+
+function applyButtonTooltips(root = document) {
+  const scope = root.querySelectorAll ? root : document;
+  scope.querySelectorAll("button").forEach(button => {
+    const tooltip = resolveButtonTooltip(button);
+    if (!tooltip) return;
+
+    button.removeAttribute("title");
+    if (!button.getAttribute("aria-label")) button.setAttribute("aria-label", tooltip);
+
+    const wrapper = button.closest(".tooltip-wrap");
+    if (wrapper) {
+      wrapper.dataset.tooltip = tooltip;
+      button.removeAttribute("data-tooltip");
+    } else {
+      button.dataset.tooltip = tooltip;
+    }
+  });
+}
+
+function initButtonTooltips() {
+  applyButtonTooltips();
+  if (buttonTooltipObserver || !document.body) return;
+
+  buttonTooltipObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      mutation.addedNodes.forEach(node => {
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        if (node.matches?.("button")) applyButtonTooltips(node.parentElement || document);
+        else applyButtonTooltips(node);
+      });
+    });
+  });
+
+  buttonTooltipObserver.observe(document.body, { childList: true, subtree: true });
+}
+
 
 
 const DEBUG_VERBOSE = false; 
@@ -951,6 +1044,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
   console.group("🚀 Inizializzazione UI e calcoli");
+  initButtonTooltips();
 
   // 🔹 Nascondo pulsanti obsoleti
   if ($('#btnComputeBLV'))  $('#btnComputeBLV').style.display = "none";
@@ -2373,6 +2467,17 @@ const resWB = computeAUC(fitWB, t12, datiWB, "WB");
 
 /*********************** Whole Body data ***********************/
 
+function normalizeWBReadings(rows) {
+  const sorted = [...rows].sort((a, b) => a.t - b.t);
+  const first = sorted.find(r => Number(r.read) > 0);
+  const firstRead = first ? Number(first.read) : null;
+
+  return sorted.map(r => ({
+    ...r,
+    fia: firstRead ? (Number(r.read) / firstRead) * 100 : 0
+  }));
+}
+
 async function importWBFromClipboard() {
   try {
     const text = await navigator.clipboard.readText();
@@ -2412,10 +2517,8 @@ async function importWBFromClipboard() {
       return;
     }
 
-    // Ordina e calcola FIA%
-    nuovaWB.sort((a, b) => a.t - b.t);
-    const first = nuovaWB[0].read || 1;
-    state.wb = nuovaWB.map(x => ({ ...x, fia: (x.read / first) * 100 }));
+    // Ordina e calcola FIA% rispetto alla prima lettura valida.
+    state.wb = normalizeWBReadings(nuovaWB);
 
     saveLocal();
     renderWB();   // popola tabella e aggiorna il grafico
@@ -2833,6 +2936,7 @@ function renderAll() {
 
 /*********************** Events & Init ***********************/
 document.addEventListener("DOMContentLoaded", () => {
+initButtonTooltips();
 if ($('#btnFitWB')) $('#btnFitWB').onclick = computeFitWB;
 if ($('#btnFitBlood')) $('#btnFitBlood').onclick = computeFitBlood;
 
@@ -2860,6 +2964,70 @@ document.getElementById('fileJSON').addEventListener('change', uploadJSON);
 
 
 
+  // Apri modal misura WB manuale (da lettura su carta)
+  if ($('#addWBManual')) {
+    $('#addWBManual').onclick = () => {
+      $('#modalWBManual').style.display = 'flex';
+    };
+  }
+
+  // Chiudi modal misura WB manuale
+  if ($('#closeModalWBManual')) {
+    $('#closeModalWBManual').onclick = () => {
+      $('#modalWBManual').style.display = 'none';
+    };
+  }
+
+  // Aggiungi singola misura WB manuale: data, ora e conteggi.
+  if ($('#btnAddWBManual')) {
+    $('#btnAddWBManual').onclick = () => {
+      const date = $('#wbManualDate').value;
+      const time = $('#wbManualTime').value;
+      const counts = toNumber($('#wbManualCounts').value);
+
+      if (!date || !time || counts == null || counts <= 0) {
+        alert("Inserisci data, ora e conteggi validi");
+        return;
+      }
+
+      const elAdmin = $('#admAdminDT');
+      const dtAdmin = elAdmin && elAdmin.value ? new Date(elAdmin.value) : null;
+      if (!dtAdmin || isNaN(dtAdmin.getTime())) {
+        alert("Manca la data/ora di somministrazione (Patient Registry)");
+        return;
+      }
+
+      const dtMeasure = new Date(`${date}T${time}`);
+      if (isNaN(dtMeasure.getTime())) {
+        alert("Data/ora misura non valida");
+        return;
+      }
+
+      const deltaH = (dtMeasure - dtAdmin) / (1000 * 60 * 60);
+      if (deltaH < 0) {
+        alert("La misura Whole Body deve essere successiva alla somministrazione");
+        return;
+      }
+
+      state.wb = normalizeWBReadings([
+        ...state.wb,
+        {
+          t: deltaH,
+          read: counts,
+          datetime: dtMeasure.toISOString(),
+          source: 'manual'
+        }
+      ]);
+
+      saveLocal();
+      renderWB();
+
+      $('#modalWBManual').style.display = 'none';
+      $('#wbManualDate').value = '';
+      $('#wbManualTime').value = '';
+      $('#wbManualCounts').value = '';
+    };
+  }
   // Apri modal wb
   if ($('#addWB')) {
     $('#addWB').onclick = () => {
